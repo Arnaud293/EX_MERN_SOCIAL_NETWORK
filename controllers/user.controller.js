@@ -55,3 +55,70 @@ module.exports.deleteUser = async (req, res) => {
     }
     catch (error) { return res.status(500).json({ message: error }) };
 }
+
+module.exports.follow = (req, res) => {
+    if (!ObjectID.isValid(req.params.id) || !ObjectID.isValid(req.body.idToFollow))
+        return res.status(400).send('ID Unknown :' + req.params.id)
+    try {
+        // Add to the follower list = add ID to the list of following
+        UserModel.findByIdAndUpdate(
+            req.params.id,
+            { $addToSet: { following: req.body.idToFollow } },
+            { new: true, upsert: true },
+            (error, docs) => {
+                if (!error) {
+                    res.status(201).json(docs);
+                }
+                else {
+                    return res.status(400).json({ error })
+                }
+            }
+        );
+        // Add to following list = add the ID to the follower list too
+        UserModel.findByIdAndUpdate(
+            req.body.idToFollow,
+            { $addToSet: { followers: req.params.id } },
+            { new: true, upsert: true },
+            (error, docs) => {
+                if (error) return res.status(400).json({ error })
+            }
+        )
+
+    }
+    catch (error) {
+        return res.status(500).json({ message: error })
+    }
+}
+
+module.exports.unfollow = (req, res) => {
+    if (!ObjectID.isValid(req.params.id) || !ObjectID.isValid(req.body.idToUnfollow))
+        return res.status(400).send('ID Unknown :' + req.params.id)
+    try {
+        // Add to the follower list = add ID to the list of following
+        UserModel.findByIdAndUpdate(
+            req.params.id,
+            { $pull: { following: req.body.idToUnfollow } },
+            { new: true, upsert: true },
+            (error, docs) => {
+                if (!error) {
+                    res.status(201).json(docs);
+                }
+                else {
+                    return res.status(400).json({ error })
+                }
+            }
+        );
+        // Add to following list = add the ID to the follower list too
+        UserModel.findByIdAndUpdate(
+            req.body.idToUnfollow,
+            { $pull: { followers: req.params.id } },
+            { new: true, upsert: true },
+            (error, docs) => {
+                if (error) return res.status(400).json({ error })
+            }
+        )
+    }
+    catch (error) {
+        return res.status(500).json({ message: error })
+    }
+}
