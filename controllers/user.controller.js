@@ -20,11 +20,11 @@ module.exports.userInfo = async (req, res) => {
     }).select('-password');
 }
 
-module.exports.updateUser = async (req, res) => {
+module.exports.updateUser = (req, res) => {
     if (!ObjectID.isValid(req.params.id))
         return res.status(400).send('ID Unknown :' + req.params.id)
     try {
-        await UserModel.findOneAndUpdate(
+        UserModel.findOneAndUpdate(
             { _id: req.params.id },
             {
                 $set: {
@@ -44,4 +44,14 @@ module.exports.updateUser = async (req, res) => {
         return res.status(500).json({ message: error });
     }
 
+}
+
+module.exports.deleteUser = async (req, res) => {
+    if (!ObjectID.isValid(req.params.id))
+        return res.status(400).send('ID Unknown :' + req.params.id)
+    try {
+        await UserModel.deleteOne({ _id: req.params.id });
+        res.status(200).json({ message: "Successfully deleted." });
+    }
+    catch (error) { return res.status(500).json({ message: error }) };
 }
