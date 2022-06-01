@@ -10,7 +10,7 @@ module.exports.readPost = (req, res) => {
         else {
             console.log('Error to get data' + error);
         }
-    })
+    }).sort({ createdAt: -1 });
 }
 
 module.exports.createPost = async (req, res) => {
@@ -129,4 +129,41 @@ module.exports.unlikePost = (req, res) => {
     catch (error) {
 
     }
+}
+
+module.exports.commentPost = (req, res) => {
+    if (!ObjectID.isValid(req.params.id))
+        return res.status(400).send('ID Unknown :' + req.params.id);
+
+    try {
+        return PostModel.findByIdAndUpdate(
+            req.params.id,
+            {
+                $push: {
+                    comment: {
+                        commenterId: req.body.commenterId,
+                        commenterPseudo: req.body.commenterPseudo,
+                        text: req.body.text,
+                        timestamps: new Date().getTime()
+                    }
+                }
+            },
+            { new: true },
+            (error, docs) => {
+                if (!error) res.send(docs);
+                else return res.status(400).send(error);
+            }
+        )
+    }
+    catch (error) {
+        return res.status(400).send(error);
+    }
+}
+
+module.exports.editCommentPost = (req, res) => {
+
+}
+
+module.exports.deleteCommentPost = (req, res) => {
+
 }
