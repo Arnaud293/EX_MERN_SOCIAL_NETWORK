@@ -161,9 +161,34 @@ module.exports.commentPost = (req, res) => {
 }
 
 module.exports.editCommentPost = (req, res) => {
+    if (!ObjectID.isValid(req.params.id))
+        return res.status(400).send('ID Unknown :' + req.params.id);
+
+    try {
+        return PostModel.findById(
+            req.params.id,
+            (error, docs) => {
+                const theComment = docs.comment.find((comment) =>
+                    comment._id.equals(req.body.commentId)
+                )
+
+                if (!theComment) res.status(404).send('comment not found');
+                theComment.text = req.body.text;
+
+                return docs.save((error) => {
+                    if (!error) return res.status(200).send(docs);
+                    return res.status(500).send(error);
+                })
+            }
+        )
+    }
+    catch (error) {
+        return res.status(400).send(error);
+    }
 
 }
 
 module.exports.deleteCommentPost = (req, res) => {
-
+    if (!ObjectID.isValid(req.params.id))
+        return res.status(400).send('ID Unknown :' + req.params.id);
 }
