@@ -2,6 +2,11 @@ const PostModel = require('../models/post.model');
 const UserModel = require('../models/user.model');
 const ObjectID = require('mongoose').Types.ObjectId;
 
+const fs = require('fs');
+const { promisify } = require('util');
+const pipeline = promisify(require('stream').pipeline);
+const { uploadErrors } = require('../utils/errors.utils');
+
 module.exports.readPost = (req, res) => {
     PostModel.find((error, docs) => {
         if (!error) {
@@ -14,9 +19,36 @@ module.exports.readPost = (req, res) => {
 }
 
 module.exports.createPost = async (req, res) => {
+
+    let fileName;
+
+    if (req.file !== null) {
+        try {
+            if (file.mimetype !== 'image/jpg'
+                && file.mimetype !== 'image/png'
+                && file.mimetype !== 'image/jpeg')
+                throw Error('Invalid file');
+
+            if (req.file.size > 500000) throw Error('max size');
+        }
+        catch (error) {
+            const errors = uploadErrors(error)
+            return res.status(201).json({ errors });
+        }
+        fileName = req.body.posterId + Date.now() + '.jpg';
+
+        await pipeline(
+            req.file.stream,
+            fs.createWriteStream(
+                `${__dirname}/../client/public/uploads/posts/${fileName}`
+            )
+        );
+    }
+
     const newPost = new PostModel({
         posterId: req.body.posterId,
         message: req.body.message,
+        picture: req.file !== null ? './uploads/posts/' + fileName : "",
         video: req.body.video,
         likers: [],
         comment: [],
@@ -191,4 +223,26 @@ module.exports.editCommentPost = (req, res) => {
 module.exports.deleteCommentPost = (req, res) => {
     if (!ObjectID.isValid(req.params.id))
         return res.status(400).send('ID Unknown :' + req.params.id);
+
+    try {
+        return PostModel.findByIdAndUpdate(
+            req.params.id,
+            {
+                $pull: {
+                    comment: {
+                        _id: req.body.commentId,
+
+                    }
+                }
+            },
+            { new: true },
+            (error, docs) => {
+                if (!error) return res.send(docs);
+                else return res.status(400).send(error);
+            }
+        )
+    }
+    catch (error) {
+        return res.status(400).send(error);
+    }
 }
