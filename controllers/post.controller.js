@@ -22,11 +22,15 @@ module.exports.createPost = async (req, res) => {
 
     let fileName;
 
+    const MIME_TYPES = {
+        "image/jpg": "jpg",
+        "image/jpeg": "jpg",
+        "image/png": "png"
+    };
+
     if (req.file !== null) {
         try {
-            if (file.mimetype !== 'image/jpg'
-                && file.mimetype !== 'image/png'
-                && file.mimetype !== 'image/jpeg')
+            if (!MIME_TYPES)
                 throw Error('Invalid file');
 
             if (req.file.size > 500000) throw Error('max size');
