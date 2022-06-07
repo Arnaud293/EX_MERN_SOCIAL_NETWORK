@@ -1,4 +1,4 @@
-import React, { useReducer, useState } from "react";
+import React, { useState } from "react";
 import { uploadPicture } from "../../actions/user.actions";
 import { useDispatch, useSelector } from "react-redux";
 
